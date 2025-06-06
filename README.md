@@ -24,9 +24,11 @@ Nursing_Chatbot/
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/Nursing_Chatbot.git
+git clone https://github.com/NurAleeya/Nursing_Chatbot.git
 cd Nursing_Chatbot
 ```
+
+> **Note**: Replace `YOUR_USERNAME` with your actual GitHub username after creating the repository on GitHub.
 
 2. Install dependencies:
 ```bash

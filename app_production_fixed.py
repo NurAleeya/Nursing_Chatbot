@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 
 # Embedded fluid calculator function (no external dependencies)
 def calc_fluid_requirement(weight_kg: float) -> str:
@@ -20,10 +21,6 @@ def calc_fluid_requirement(weight_kg: float) -> str:
         total = 1500 + (weight_kg - 20) * 20
 
     return f"Estimated Daily Fluid Requirement: {total:.0f} ml/day"
-
-# Embedded backend functions for production (no external dependencies)
-import os
-import pickle
 
 def load_simple_chunks():
     """Load pre-built text chunks from file"""
@@ -52,37 +49,26 @@ def simple_search(query, chunks, max_results=3):
     scored_chunks.sort(key=lambda x: x[0], reverse=True)
     return [chunk for score, chunk in scored_chunks[:max_results]]
 
-# Try to load chunks
-try:
-    chunks = load_simple_chunks()
-    BACKEND_AVAILABLE = len(chunks) > 0
-    if not BACKEND_AVAILABLE:
-        st.warning("📚 Medical knowledge base not found. Only fluid calculator is available.")
-except Exception as e:
-    BACKEND_AVAILABLE = False
-    chunks = []
-    st.warning(f"⚠️ Could not load medical knowledge base: {e}")
-
-# Utils is now embedded, so always available
-UTILS_AVAILABLE = True
-
 # Configure Streamlit page
 st.set_page_config(page_title="KKH Nursing Chatbot", layout="wide")
 st.title("🩺 KKH Nursing Chatbot")
 st.markdown("Ask clinical questions based on paediatric medical emergency guidelines. You can also use the built-in fluid calculator.")
 
-# Check if running locally or in production (safe check)
+# Try to load chunks
 try:
-    if st.secrets.get("ENVIRONMENT") == "production":
-        st.info("🚀 This app is running in production mode. Some features may be limited.")
-except Exception:
-    # Running locally without secrets file - this is normal
-    pass
+    chunks = load_simple_chunks()
+    KNOWLEDGE_BASE_AVAILABLE = len(chunks) > 0
+    if not KNOWLEDGE_BASE_AVAILABLE:
+        st.info("📚 Medical knowledge base not found. Only fluid calculator is available.")
+except Exception as e:
+    KNOWLEDGE_BASE_AVAILABLE = False
+    chunks = []
+    st.info(f"⚠️ Could not load medical knowledge base. Only fluid calculator is available.")
 
 # --- Chatbot Interface ---
 st.header("💬 Ask a Medical Question")
 
-if BACKEND_AVAILABLE:
+if KNOWLEDGE_BASE_AVAILABLE:
     query = st.text_input("Enter your medical or nursing question:")
 
     if st.button("Ask"):
@@ -115,28 +101,16 @@ else:
 st.divider()
 st.header("🧮 Paediatric Fluid Calculator")
 
-if UTILS_AVAILABLE:
-    st.markdown("This calculator works offline and provides fluid requirements based on standard paediatric guidelines.")
+st.markdown("This calculator works offline and provides fluid requirements based on standard paediatric guidelines.")
 
-    weight = st.number_input("Enter child's weight (kg):", min_value=0.0, step=0.1)
+weight = st.number_input("Enter child's weight (kg):", min_value=0.0, step=0.1)
 
-    if st.button("Calculate Fluid Requirement"):
-        if weight <= 0:
-            st.warning("Please enter a valid weight.")
-        else:
-            result = calc_fluid_requirement(weight)
-            st.success(result)
-else:
-    st.warning("⚠️ Fluid calculator is unavailable due to missing dependencies.")
-    st.markdown("**Manual Calculation Guide:**")
-    st.markdown("""
-    - **First 10 kg:** 100 mL/kg/day
-    - **Next 10 kg (11-20 kg):** 50 mL/kg/day  
-    - **Each kg above 20 kg:** 20 mL/kg/day
-    
-    **Example:** 25 kg child = (10×100) + (10×50) + (5×20) = 1000 + 500 + 100 = 1600 mL/day
-    """)
-    st.info("Always consult medical professionals for accurate fluid management.")
+if st.button("Calculate Fluid Requirement"):
+    if weight <= 0:
+        st.warning("Please enter a valid weight.")
+    else:
+        result = calc_fluid_requirement(weight)
+        st.success(result)
 
 # Footer
 st.divider()
